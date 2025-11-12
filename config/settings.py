@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     """Application settings using Pydantic BaseSettings for environment variable management and validation."""
 
     # API Keys
-    google_api_key: str
+    google_api_key: Optional[str] = None
     huggingfacehub_api_token: Optional[str] = None
 
     # Application Settings
