@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     embedding_model: str = "sentence-transformers/all-MiniLM-L12-v2"
     chat_model: str = "gemini-flash-latest"
     temperature: float = 0.1
+    embedding_device: str = "cpu"  # Options: cpu, cuda
 
     class Config:
         env_file = ".env"
