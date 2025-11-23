@@ -78,6 +78,22 @@ class DocumentProcessor:
                     f"(avg. chunk size: {average_chunk_size:.2f} characters)")
         return chunks
 
+    def chunk_document(self, documents) -> List[Document]:
+        """Split Docs into smaller chunks."""
+        if not documents:
+            logger.error("No documents to chunk.")
+            raise ValueError("No documents to chunk.")
+
+        logger.info(f"Starting to chunk {len(documents)} documents...")
+        chunks = self.text_splitter.split_documents(documents=documents)
+
+        total_chars = sum(len(chunk.page_content) for chunk in chunks)
+        avg_chunk_size = total_chars / len(chunks) if chunks else 0
+
+        logger.info(f"Chunked into {len(chunks)} chunks (avg. chunk size: {avg_chunk_size:.2f} characters)")
+
+        return chunks
+
     def process_directory(self, directory_path: str) -> List[Document]:
         """Processes all supported documents in a directory."""
         directory = Path(directory_path)
