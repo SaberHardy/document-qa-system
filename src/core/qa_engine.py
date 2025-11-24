@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from typing import Dict, Any, List
 from xml.dom.minidom import Document
@@ -21,8 +20,8 @@ class QAEngine:
         self.chain = None
         logger.info("QAEngine initialized.")
 
-    def _initialize_llm(self):
-        """Initialize the language model."""
+    def _initialize_llm(self) -> ChatGoogleGenerativeAI:
+        """Initialize the language model with proper configuration"""
         logger.info(f"Initializing LLM: {settings.chat_model}")
 
         return ChatGoogleGenerativeAI(
@@ -37,7 +36,7 @@ class QAEngine:
         """Create a chat prompt template."""
         logger.info("Creating chat prompt template.")
 
-        prompt = ChatPromptTemplate.from_messages("""
+        return ChatPromptTemplate.from_template("""
                     You are an expert AI assistant for document analysis. Use the provided context to answer the user's question accurately and helpfully.
                     
                     CONTEXT INFORMATION:
@@ -56,11 +55,11 @@ class QAEngine:
                     
                     ANSWER:
                 """)
-        return prompt
+        # return prompt
 
     def create_qa_chain(self, retriever):
         """Create the Q&A chain with proper document formatting"""
-
+        logger.info("Calling create_qa_chain.")
         def format_documents(docs: List[Document]) -> str:
             """Format retrieved documents for the prompt"""
             if not docs:
@@ -73,7 +72,7 @@ class QAEngine:
                 formatted.append(f"[Document {i} - Source: {source}]\n{content}")
 
             return "\n\n".join(formatted)
-
+        # print(f"retriever: {retriever}, format_documents: {format_documents}, self.llm: {self.llm}")
         self.chain = (
                 {
                     "context": retriever | format_documents,
@@ -83,8 +82,13 @@ class QAEngine:
                 | self.llm
                 | StrOutputParser()
         )
-
-        return self.chain
+        # print("QA chain created:", self.chain)
+        if self.chain:
+            logger.info("QA chain created successfully.")
+            return self.chain
+        else:
+            logger.error("Failed to create QA chain.")
+            raise ValueError("QA chain creation failed.")
 
     async def aquery(self, question: str, retriever) -> Dict[str, Any]:
         """Asynchronously query the QA chain."""
@@ -113,14 +117,28 @@ class QAEngine:
             logger.error("Error processing QA query: %s", str(e))
             return {
                 "question": question,
-                "answer": "An error occurred while processing your request.",
+                "answer": "Error in async query.",
                 "sources": [],
                 "document_count": 0
             }
 
     def query(self, question: str, retriever) -> Dict[str, Any]:
         """Synchronously query the QA chain."""
-        if not self.chain:
-            self.create_qa_chain(retriever)
+        import asyncio
 
-        return asyncio.run(self.aquery(question, retriever))
+        try:
+            if not self.chain:
+                logger.info("The chaine self.chain is not initialized. Creating QA chain.")
+                self.create_qa_chain(retriever)
+            else:
+                logger.info("The chaine self.chain is already initialized.")
+            return asyncio.run(self.aquery(question, retriever))
+
+        except Exception as e:
+            logger.error("Error in synchronous query: %s", str(e))
+            return {
+                "question": question,
+                "answer": "An error occurred while processing your request.",
+                "sources": [],
+                "document_count": 0
+            }
