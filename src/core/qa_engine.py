@@ -1,4 +1,6 @@
+import asyncio
 import logging
+from typing import Dict, Any
 from xml.dom.minidom import Document
 
 from langchain_core.output_parsers import StrOutputParser
@@ -74,13 +76,52 @@ class QAEngine:
             return "\n\n".join(formatter)
 
         self.chain = (
-            {
-                "context": retriever | format_docs,
-                "question": RunnablePassthrough()
-            }
-            | self.llm.bind_chat_prompt(self._create_prompt())
-            | self.llm
-            | StrOutputParser()
+                {
+                    "context": retriever | format_docs,
+                    "question": RunnablePassthrough()
+                }
+                | self.llm.bind_chat_prompt(self._create_prompt())
+                | self.llm
+                | StrOutputParser()
         )
         logger.info("QA chain created.")
         return self.chain
+
+    async def aquery(self, question: str, retriever) -> Dict[str, Any]:
+        """Asynchronously query the QA chain."""
+        if not self.chain:
+            self.create_qa_chain(retriever)
+
+        try:
+            relevant_docs = retriever.get_relevant_documents(question)
+            answer = self.chain.invoke(question)
+
+            response = {
+                "question": question,
+                "answer": answer,
+                "sources": [
+                    {
+                        "source": doc.metadata.get('source', 'unknown source'),
+                        "content_preview": doc.page_content[:200] + "...",  # first 200 chars
+                        "relevance_score": getattr(doc, 'score', None)
+                    } for doc in relevant_docs
+                ],
+                "document_count": len(relevant_docs)
+            }
+            logger.info("QA query processed successfully.")
+            return response
+        except Exception as e:
+            logger.error("Error processing QA query: %s", str(e))
+            return {
+                "question": question,
+                "answer": "An error occurred while processing your request.",
+                "sources": [],
+                "document_count": 0
+            }
+
+    def query(self, question: str, retriever) -> Dict[str, Any]:
+        """Synchronously query the QA chain."""
+        if not self.chain:
+            self.create_qa_chain(retriever)
+
+        return asyncio.run(self.aquery(question, retriever))
