@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
 from xml.dom.minidom import Document
 
 from langchain_core.output_parsers import StrOutputParser
@@ -59,32 +59,31 @@ class QAEngine:
         return prompt
 
     def create_qa_chain(self, retriever):
-        """Create a QA chain using the vector store and LLM."""
-        from langchain.chains import RetrievalQA
-        from typing import List
+        """Create the Q&A chain with proper document formatting"""
 
-        def format_docs(docs: List[Document]) -> str:
+        def format_documents(docs: List[Document]) -> str:
+            """Format retrieved documents for the prompt"""
             if not docs:
-                return "No context available."
+                return "No relevant documents found."
 
-            formatter = []
+            formatted = []
             for i, doc in enumerate(docs, 1):
-                source = doc.metadata.get("source", "unknown source")
+                source = doc.metadata.get('source', 'Unknown')
                 content = doc.page_content.strip()
-                formatter.append(f"[Document {i} - Source: {source}]\n{content}\n")
+                formatted.append(f"[Document {i} - Source: {source}]\n{content}")
 
-            return "\n\n".join(formatter)
+            return "\n\n".join(formatted)
 
         self.chain = (
                 {
-                    "context": retriever | format_docs,
+                    "context": retriever | format_documents,
                     "question": RunnablePassthrough()
                 }
-                | self.llm.bind_chat_prompt(self._create_prompt())
+                | self._create_prompt()
                 | self.llm
                 | StrOutputParser()
         )
-        logger.info("QA chain created.")
+
         return self.chain
 
     async def aquery(self, question: str, retriever) -> Dict[str, Any]:
