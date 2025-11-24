@@ -1,0 +1,28 @@
+PROJECT MANAGEMENT FUNDAMENTALS
+
+Project management is the practice of initiating, planning, executing, controlling,
+and closing the work of a team to achieve specific goals and meet specific success
+criteria at the specified time.
+
+Key Project Management Methodologies:
+
+1. Agile Methodology
+Agile project management is an iterative approach to delivering a project throughout its life cycle.
+Iterative approaches are frequently used in software development projects to promote velocity and
+adaptability since the benefit of iteration is that you can adjust as you go along rather than
+following a linear path.
+
+2. Waterfall Methodology
+The Waterfall methodology is a traditional project management approach that follows a linear,
+sequential path. Each phase must be completed before the next phase can begin.
+
+3. Scrum Framework
+Scrum is a framework that helps teams work together. Much like a rugby team training for the big game,
+Scrum encourages teams to learn through experiences, self-organize while working on a problem,
+and reflect on their wins and losses to continuously improve.
+
+Project Management Tools:
+- Jira for Agile project management
+- Trello for task organization
+- Asana for team collaboration
+- Microsoft Project for traditional project planning
